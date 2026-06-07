@@ -1,13 +1,14 @@
 #
-Simplest code for the lightest http server that returns "hello" on route `/hello`, using standard libraries only.
 
-| Server   | Port | Type         |
-|----------|------|--------------|
-| rust     | 8080 | compiled     |
-| python   | 8081 | interpreted  |
-| node     | 8082 | interpreted  |
-| zig      | 8083 | compiled     |
-| go       | 8084 | compiled     |
+Simplest code for the lightest http server that returns "Hello World" on route `/hello`, using standard libraries only.
+
+| Server | Port | Type        |
+| ------ | ---- | ----------- |
+| rust   | 8080 | compiled    |
+| python | 8081 | interpreted |
+| node   | 8082 | interpreted |
+| zig    | 8083 | compiled    |
+| go     | 8084 | compiled    |
 
 ## Quick start
 
@@ -21,6 +22,9 @@ Simplest code for the lightest http server that returns "hello" on route `/hello
 
 # Run all at once
 ./run.sh all
+
+# Compare memory
+./mem.sh
 ```
 
 The script auto-builds compiled servers if needed.
