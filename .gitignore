@@ -3,3 +3,4 @@ go_server
 zig_server
 zig_server.o
 zig-cache/
+.server_pids

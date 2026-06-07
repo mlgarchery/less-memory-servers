@@ -41,46 +41,65 @@ EOF
 
 run_rust() {
     build_rust
-    echo "[run] rust on :8080"
+    echo "[run] rust    http://localhost:8080/hello"
     exec ./rust
 }
 
 run_python() {
-    echo "[run] python on :8081"
+    echo "[run] python  http://localhost:8081/hello"
     exec python3 python.py
 }
 
 run_node() {
-    echo "[run] node on :8082"
+    echo "[run] node    http://localhost:8082/hello"
     exec node node.js
 }
 
 run_zig() {
     build_zig
-    echo "[run] zig on :8083"
+    echo "[run] zig     http://localhost:8083/hello"
     exec ./zig_server
 }
 
 run_go() {
     build_go
-    echo "[run] go on :8084"
+    echo "[run] go      http://localhost:8084/hello"
     exec ./go_server
 }
+
+PIDFILE="$DIR/.server_pids"
+
+record_pids() {
+    echo "$$" > "$PIDFILE"
+}
+
+cleanup() {
+    echo ""
+    echo "[stop] killing all servers..."
+    rm -f "$PIDFILE"
+    kill 0
+    wait 2>/dev/null
+    echo "[stop] done."
+    exit 0
+}
+trap cleanup SIGINT SIGTERM
 
 run_all() {
     build_rust
     build_go
     build_zig
 
-    echo "[run] rust on :8080"
+    record_pids
+
+    echo "[run] rust    http://localhost:8080/hello"
     ./rust &
-    echo "[run] python on :8081"
+    echo "[run] python  http://localhost:8081/hello"
     python3 python.py &
-    echo "[run] node on :8082"
+    echo "[run] node    http://localhost:8082/hello"
     node node.js &
-    echo "[run] zig on :8083"
+    echo "[run] zig     http://localhost:8083/hello"
     ./zig_server &
-    echo "[run] go on :8084"
+    echo "[run] go      http://localhost:8084/hello"
     ./go_server &
 
     echo "All servers running. Press Ctrl+C to stop."

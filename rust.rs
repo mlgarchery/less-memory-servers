@@ -12,7 +12,7 @@ fn main() {
         stream.read(&mut buffer).unwrap();
 
         let response = if buffer.starts_with(b"GET /hello ") {
-            "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhello"
+            "HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nHello World"
         } else {
             "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n"
         };
