@@ -14,7 +14,7 @@ build_rust() {
 build_go() {
     if [ ! -f ./go_server ]; then
         echo "[build] go build go.go"
-        go build -o go_server go.go
+        CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o go_server go.go
     fi
 }
 
