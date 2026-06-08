@@ -1,5 +1,6 @@
 rust
 go_server
+tinygo_server
 zig_server
 zig_server.o
 zig-cache/

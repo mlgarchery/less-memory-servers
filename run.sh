@@ -25,6 +25,27 @@ build_zig() {
     fi
 }
 
+build_tinygo() {
+    if [ ! -f ./tinygo_server ]; then
+        echo "[build] tinygo build tinygo.go"
+        # TinyGo 0.37.0 supports Go 1.19–1.24; find a compatible Go version
+        local go124=""
+        for candidate in go1.24 go1.24.4 "$HOME/go/bin/go1.24.4" "$HOME/sdk/go1.24.4/bin/go"; do
+            if command -v "$candidate" &>/dev/null; then
+                go124="$candidate"
+                break
+            fi
+        done
+        if [ -n "$go124" ]; then
+            local goroot
+            goroot=$("$go124" env GOROOT)
+            PATH="$goroot/bin:$PATH" GOROOT="$goroot" tinygo build -o tinygo_server -no-debug tinygo.go
+        else
+            tinygo build -o tinygo_server -no-debug tinygo.go
+        fi
+    fi
+}
+
 usage() {
     cat <<EOF
 Usage: $0 <server>
@@ -35,6 +56,7 @@ Servers:
   node       port 8082  (interpreted)
   zig        port 8083  (compiled)
   go         port 8084  (compiled)
+  tinygo     port 8085  (compiled)
   all        run all servers in background
 EOF
 }
@@ -67,6 +89,12 @@ run_go() {
     exec ./go_server
 }
 
+run_tinygo() {
+    build_tinygo
+    echo "[run] tinygo  http://localhost:8085/hello"
+    exec ./tinygo_server
+}
+
 PIDFILE="$DIR/.server_pids"
 
 record_pids() {
@@ -88,6 +116,7 @@ run_all() {
     build_rust
     build_go
     build_zig
+    build_tinygo
 
     record_pids
 
@@ -101,6 +130,8 @@ run_all() {
     ./zig_server &
     echo "[run] go      http://localhost:8084/hello"
     ./go_server &
+    echo "[run] tinygo  http://localhost:8085/hello"
+    ./tinygo_server &
 
     echo "All servers running. Press Ctrl+C to stop."
     wait
@@ -112,6 +143,7 @@ case "${1:-}" in
     node)   run_node   ;;
     zig)    run_zig    ;;
     go)     run_go     ;;
+    tinygo) run_tinygo ;;
     all)    run_all    ;;
     *)      usage      ;;
 esac

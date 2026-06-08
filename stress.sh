@@ -16,6 +16,7 @@ SERVERS=(
   "python:8081"
   "node:8082"
   "go:8084"
+  "tinygo:8085"
 )
 
 wait_for_server() {
