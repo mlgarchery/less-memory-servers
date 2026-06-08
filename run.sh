@@ -21,7 +21,7 @@ build_go() {
 build_zig() {
     if [ ! -f ./zig/zig-out/bin/zig-server ]; then
         echo "[build] zig build (zig)"
-        zig build -Doptimize=ReleaseSafe --prefix zig/zig-out --build-file zig/build.zig
+        zig build --prefix zig/zig-out --build-file zig/build.zig
     fi
 }
 
