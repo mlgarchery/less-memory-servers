@@ -1,21 +1,25 @@
-#
+# Minimal HTTP "Hello World" Servers
 
-Simplest code for the lightest http server that returns "Hello World" on route `/hello`, using standard libraries only.
+Each server returns `"Hello World"` on `GET /hello` and `404` otherwise.
 
-| Server | Port | Type        |
-| ------ | ---- | ----------- |
-| rust   | 8080 | compiled    |
-| python | 8081 | interpreted |
-| node   | 8082 | interpreted |
-| zig    | 8083 | compiled    |
-| go     | 8084 | compiled    |
-| tinygo | 8085 | compiled    |
+| Server | Port | Type        | Source                  | Approach           |
+| ------ | ---- | ----------- | ----------------------- | ------------------ |
+| rust   | 8080 | compiled    | `rust/src/main.rs`      | axum + tokio       |
+| python | 8081 | interpreted | `python/server.py`      | stdlib http.server |
+| node   | 8082 | interpreted | `node/server.js`        | stdlib http        |
+| zig    | 8083 | compiled    | `zig/src/main.zig`      | httpz              |
+| go     | 8084 | compiled    | `go/main.go`            | stdlib net/http    |
+| tinygo | 8085 | compiled    | `tinygo/main.go`        | raw syscalls       |
 
 ## Build notes
 
-The Go server is built with `CGO_ENABLED=0 -ldflags="-s -w" -trimpath` to produce a static, stripped binary. This reduces VSZ from ~1.6 GB (default dynamic build with glibc) to ~1.2 GB. The remaining VSZ is Go's runtime heap address space reservation, not actual memory (RSS stays ~5 MB).
+**Rust** uses [axum](https://github.com/tokio-rs/axum) + tokio via Cargo. Built with `cargo build --release`.
 
-The TinyGo server uses raw Linux syscalls (`socket`, `bind`, `listen`, `accept`, `read`, `write`) instead of the `net` or `net/http` packages. TinyGo's `net` package requires a hardware "netdev" driver — an abstraction designed for embedded targets (ESP32, Wiznet W5500, etc.) where networking goes through an external chip. There is no Linux netdev implementation in TinyGo, so `net/http` is not usable on Linux. The syscall approach sidesteps this entirely, matching how the Rust and Zig servers work. The resulting binary is ~282 KB vs ~5.5 MB for standard Go.
+**Zig** uses [httpz](https://github.com/karlseguin/http.zig) via `zig build`. Dependencies are declared in `zig/build.zig.zon` and fetched automatically from `~/.cache/zig/` on first build.
+
+**Go** is built with `CGO_ENABLED=0 -ldflags="-s -w" -trimpath` to produce a static, stripped binary. This reduces VSZ from ~1.6 GB (default dynamic build with glibc) to ~1.2 GB. The remaining VSZ is Go's runtime heap address space reservation, not actual memory (RSS stays ~5 MB).
+
+**TinyGo** uses raw Linux syscalls (`socket`, `bind`, `listen`, `accept`, `read`, `write`) instead of the `net` or `net/http` packages. TinyGo's `net` package requires a hardware "netdev" driver — an abstraction designed for embedded targets (ESP32, Wiznet W5500, etc.) where networking goes through an external chip. There is no Linux netdev implementation in TinyGo, so `net/http` is not usable on Linux. The resulting binary is ~282 KB vs ~5.5 MB for standard Go.
 
 **Go version compatibility:** TinyGo 0.37.0 only supports Go 1.19–1.24. If your system Go is newer (e.g. 1.26), install a compatible version alongside it:
 

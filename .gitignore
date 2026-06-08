@@ -1,7 +1,7 @@
-rust
-go_server
-tinygo_server
-zig_server
-zig_server.o
-zig-cache/
+go/go_server
+tinygo/tinygo_server
+rust/target/
+zig/zig-pkg/
+zig/zig-out/
+zig/.zig-cache/
 .server_pids

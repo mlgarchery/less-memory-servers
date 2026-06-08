@@ -1,43 +1,37 @@
 # Minimal HTTP "Hello World" Servers
 
-Each server returns `"Hello World"` on `GET /hello` and `404` otherwise, using only the standard library.
+Each server returns `"Hello World"` on `GET /hello` and `404` otherwise.
 
-| Server | Port | Type |
-|--------|------|------|
-| Rust | 8080 | compiled |
-| Python | 8081 | interpreted |
-| Node | 8082 | interpreted |
-| Zig | 8083 | compiled |
-| Go | 8084 | compiled |
+| Server | Port | Type        |
+| ------ | ---- | ----------- |
+| rust   | 8080 | compiled    |
+| python | 8081 | interpreted |
+| node   | 8082 | interpreted |
+| zig    | 8083 | compiled    |
+| go     | 8084 | compiled    |
+| tinygo | 8085 | compiled    |
 
-## Rust — `rust.rs`
+## Rust — `rust/src/main.rs` (axum + tokio)
 
 ```rust
-use std::{
-    io::{Read, Write},
-    net::TcpListener,
-};
+use axum::{routing::get, Router};
 
-fn main() {
-    let listener = TcpListener::bind("0.0.0.0:8080").unwrap();
+async fn hello() -> &'static str {
+    "Hello World"
+}
 
-    for stream in listener.incoming() {
-        let mut stream = stream.unwrap();
-        let mut buffer = [0; 1024];
-        stream.read(&mut buffer).unwrap();
+#[tokio::main]
+async fn main() {
+    let app = Router::new()
+        .route("/hello", get(hello));
 
-        let response = if buffer.starts_with(b"GET /hello ") {
-            "HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nHello World"
-        } else {
-            "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n"
-        };
-
-        stream.write_all(response.as_bytes()).unwrap();
-    }
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await
+        .expect("failed to bind port 8080 (already in use?)");
+    axum::serve(listener, app).await.unwrap();
 }
 ```
 
-## Python — `python.py`
+## Python — `python/server.py`
 
 ```python
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -57,7 +51,7 @@ class Handler(BaseHTTPRequestHandler):
 HTTPServer(("0.0.0.0", 8081), Handler).serve_forever()
 ```
 
-## Node — `node.js`
+## Node — `node/server.js`
 
 ```js
 const http = require("http");
@@ -66,7 +60,7 @@ http
   .createServer((req, res) => {
     if (req.url === "/hello") {
       res.writeHead(200);
-            res.end("Hello World");
+      res.end("Hello World");
     } else {
       res.writeHead(404);
       res.end();
@@ -75,42 +69,28 @@ http
   .listen(8082, "0.0.0.0");
 ```
 
-## Zig — `zig.zig`
+## Zig — `zig/src/main.zig` (httpz)
 
 ```zig
 const std = @import("std");
-const net = std.Io.net;
+const httpz = @import("httpz");
 
 pub fn main(init: std.process.Init) !void {
-    const io = init.io;
+    var server = try httpz.Server(void).init(init.io, std.heap.smp_allocator, .{ .address = .all(8083) }, {});
+    defer server.deinit();
 
-    const addr = try net.IpAddress.parse("0.0.0.0", 8083);
+    var router = try server.router(.{});
+    router.get("/hello", hello, .{});
 
-    var server = try addr.listen(io, .{});
-    defer server.deinit(io);
+    try server.listen();
+}
 
-    while (true) {
-        var conn = try server.accept(io);
-        defer conn.close(io);
-
-        var read_buf: [1024]u8 = undefined;
-        var reader = conn.reader(io, &read_buf);
-        var writer = conn.writer(io, &.{});
-
-        const line = reader.interface.takeDelimiterExclusive('\n') catch continue;
-
-        const response =
-            if (std.mem.startsWith(u8, line, "GET /hello "))
-                "HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nHello World"
-            else
-                "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n";
-
-        try writer.interface.writeAll(response);
-    }
+fn hello(_: *httpz.Request, res: *httpz.Response) !void {
+    res.body = "Hello World";
 }
 ```
 
-## Go — `go.go`
+## Go — `go/main.go`
 
 ```go
 package main
@@ -130,3 +110,7 @@ func main() {
 	http.ListenAndServe("0.0.0.0:8084", nil)
 }
 ```
+
+## TinyGo — `tinygo/main.go`
+
+Raw Linux syscalls (`socket`, `bind`, `listen`, `accept`, `read`, `write`). TinyGo's `net` package requires a hardware netdev driver not available on Linux, so HTTP stdlib is not usable.

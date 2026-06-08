@@ -5,29 +5,29 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
 build_rust() {
-    if [ ! -f ./rust ]; then
-        echo "[build] rustc rust.rs"
-        rustc rust.rs -o rust
+    if [ ! -f ./rust/target/release/rust-server ]; then
+        echo "[build] cargo build --release (rust)"
+        cargo build --release --manifest-path rust/Cargo.toml
     fi
 }
 
 build_go() {
-    if [ ! -f ./go_server ]; then
-        echo "[build] go build go.go"
-        CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o go_server go.go
+    if [ ! -f ./go/go_server ]; then
+        echo "[build] go build go"
+        CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o go/go_server go/main.go
     fi
 }
 
 build_zig() {
-    if [ ! -f ./zig_server ]; then
-        echo "[build] zig build-exe zig.zig"
-        zig build-exe zig.zig -fno-entry -OReleaseSmall -femit-bin=zig_server
+    if [ ! -f ./zig/zig-out/bin/zig-server ]; then
+        echo "[build] zig build (zig)"
+        zig build -Doptimize=ReleaseSafe --prefix zig/zig-out --build-file zig/build.zig
     fi
 }
 
 build_tinygo() {
-    if [ ! -f ./tinygo_server ]; then
-        echo "[build] tinygo build tinygo.go"
+    if [ ! -f ./tinygo/tinygo_server ]; then
+        echo "[build] tinygo build tinygo"
         # TinyGo 0.37.0 supports Go 1.19–1.24; find a compatible Go version
         local go124=""
         for candidate in go1.24 go1.24.4 "$HOME/go/bin/go1.24.4" "$HOME/sdk/go1.24.4/bin/go"; do
@@ -39,9 +39,9 @@ build_tinygo() {
         if [ -n "$go124" ]; then
             local goroot
             goroot=$("$go124" env GOROOT)
-            PATH="$goroot/bin:$PATH" GOROOT="$goroot" tinygo build -o tinygo_server -no-debug tinygo.go
+            PATH="$goroot/bin:$PATH" GOROOT="$goroot" tinygo build -o tinygo/tinygo_server -no-debug tinygo/main.go
         else
-            tinygo build -o tinygo_server -no-debug tinygo.go
+            tinygo build -o tinygo/tinygo_server -no-debug tinygo/main.go
         fi
     fi
 }
@@ -64,35 +64,35 @@ EOF
 run_rust() {
     build_rust
     echo "[run] rust    http://localhost:8080/hello"
-    exec ./rust
+    exec ./rust/target/release/rust-server
 }
 
 run_python() {
     echo "[run] python  http://localhost:8081/hello"
-    exec python3 python.py
+    exec python3 python/server.py
 }
 
 run_node() {
     echo "[run] node    http://localhost:8082/hello"
-    exec node node.js
+    exec node node/server.js
 }
 
 run_zig() {
     build_zig
     echo "[run] zig     http://localhost:8083/hello"
-    exec ./zig_server
+    exec ./zig/zig-out/bin/zig-server
 }
 
 run_go() {
     build_go
     echo "[run] go      http://localhost:8084/hello"
-    exec ./go_server
+    exec ./go/go_server
 }
 
 run_tinygo() {
     build_tinygo
     echo "[run] tinygo  http://localhost:8085/hello"
-    exec ./tinygo_server
+    exec ./tinygo/tinygo_server
 }
 
 PIDFILE="$DIR/.server_pids"
@@ -102,10 +102,11 @@ record_pids() {
 }
 
 cleanup() {
+    trap - SIGINT SIGTERM
     echo ""
     echo "[stop] killing all servers..."
     rm -f "$PIDFILE"
-    kill 0
+    kill 0 2>/dev/null
     wait 2>/dev/null
     echo "[stop] done."
     exit 0
@@ -121,17 +122,17 @@ run_all() {
     record_pids
 
     echo "[run] rust    http://localhost:8080/hello"
-    ./rust &
+    ./rust/target/release/rust-server &
     echo "[run] python  http://localhost:8081/hello"
-    python3 python.py &
+    python3 python/server.py &
     echo "[run] node    http://localhost:8082/hello"
-    node node.js &
+    node node/server.js &
     echo "[run] zig     http://localhost:8083/hello"
-    ./zig_server &
+    ./zig/zig-out/bin/zig-server &
     echo "[run] go      http://localhost:8084/hello"
-    ./go_server &
+    ./go/go_server &
     echo "[run] tinygo  http://localhost:8085/hello"
-    ./tinygo_server &
+    ./tinygo/tinygo_server &
 
     echo "All servers running. Press Ctrl+C to stop."
     wait
