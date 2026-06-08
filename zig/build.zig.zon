@@ -2,11 +2,6 @@
     .name = .zig_server,
     .version = "0.0.0",
     .fingerprint = 0x163d0e71f4c3337f,
-    .dependencies = .{
-        .httpz = .{
-            .url = "https://github.com/karlseguin/http.zig/archive/refs/heads/master.tar.gz",
-            .hash = "httpz-0.0.0-PNVzrLLOCAD99G3Q3N-nDSsL40Yl7bAJ0_et7PXeWgsa",
-        },
-    },
+    .dependencies = .{},
     .paths = .{""},
 }

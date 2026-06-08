@@ -1,15 +1,15 @@
-use axum::{routing::get, Router};
+use tiny_http::{Response, Server, StatusCode};
 
-async fn hello() -> &'static str {
-    "Hello World"
-}
-
-#[tokio::main]
-async fn main() {
-    let app = Router::new()
-        .route("/hello", get(hello));
-
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await
+fn main() {
+    let server = Server::http("0.0.0.0:8080")
         .expect("failed to bind port 8080 (already in use?)");
-    axum::serve(listener, app).await.unwrap();
+
+    for request in server.incoming_requests() {
+        let response = if request.url() == "/hello" {
+            Response::from_string("Hello World")
+        } else {
+            Response::from_string("").with_status_code(StatusCode(404))
+        };
+        request.respond(response).ok();
+    }
 }
