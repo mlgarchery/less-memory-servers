@@ -6,9 +6,9 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/hello":
             self.send_response(200)
             self.end_headers()
-            self.wfile.write(b"Hello World")
+            self.wfile.write(b"Hello World ! ")
         else:
-            self.send_response(404)
+            self.send_response(404
             self.end_headers()
 
 
