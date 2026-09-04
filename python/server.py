@@ -10,6 +10,7 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self.send_response(404)
             self.end_headers()
+        print("added on main")
 
 
 HTTPServer(("0.0.0.0", 8081), Handler).serve_forever()
